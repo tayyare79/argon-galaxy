@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ARGON // Interaktive 3D-Partikel-Galaxie (WebGL)</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='28' fill='%23050714'/%3E%3Ccircle cx='32' cy='32' r='10' fill='%2300e5ff'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <!-- Vollbild-WebGL-Canvas für die 3D-Partikel-Galaxie -->
+  <canvas id="galaxy-canvas" aria-label="Interaktive 3D-Partikel-Galaxie"></canvas>
+
+  <!-- Dezentraler Top-Left Header / Katalog-Signatur -->
+  <header id="brand-header" class="brand-header" aria-label="Galaxie-Kataloginfo">
+    <div class="brand-badge">WEBGL 2.0 // CUSTOM SHADER ENGINE</div>
+    <h1 class="brand-title">ARGON <span class="brand-thin">GALAXY</span></h1>
+    <div class="catalog-meta">
+      <span id="catalog-name" class="catalog-id">NGC-4096 // Spiral-Typ Sb</span>
+      <span class="meta-sep">•</span>
+      <span id="seed-display" class="seed-code">Seed #A4F29C</span>
+    </div>
+  </header>
+
+  <!-- Visuelles Banner bei Pause, Reset oder Zufalls-Generierung -->
+  <div id="CenterBanner" class="status-toast" aria-live="polite">
+    <span id="toast-icon" class="toast-icon">✦</span>
+    <span id="toast-text">Bereit</span>
+  </div>
+
+  <!-- Dezenter Button oben rechts, wenn das Menü ausgeblendet ist -->
+  <button
+    type="button"
+    id="btn-show-menu"
+    class="floating-menu-toggle"
+    aria-label="Menü einblenden (Taste H oder M)"
+    title="Menü wieder einblenden (Taste H oder M)"
+  >
+    <span>☰ Menü</span>
+    <kbd>H</kbd>
+  </button>
+
+  <!-- UI-Control-Panel oben rechts (Glassmorphism) -->
+  <aside id="control-panel" class="control-panel" aria-label="Galaxie-Steuerung">
+    <div class="panel-header">
+      <div>
+        <span class="panel-eyebrow">ECHTZEIT-PARAMETER</span>
+        <h2 class="panel-title">Galaxie-Synthese</h2>
+      </div>
+      <div class="panel-header-Right">
+        <span id="state-pill" class="state-pill state-running">LÄUFT</span>
+        <button
+          type="button"
+          id="btn-hide-menu"
+          class="icon-btn"
+          aria-label="Menü ausblenden (Taste H oder M)"
+          title="Menü ausblenden (Taste H oder M)"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <div class="sliders-group">
+      <!-- 1. Slider: Partikelanzahl -->
+      <div class="control-row">
+        <div class="control-label-line">
+          <label for="slider-particles">Partikelanzahl</label>
+          <output id="val-particles" for="slider-particles" class="control-value">45.000</output>
+        </div>
+        <input
+          type="range"
+          id="slider-particles"
+          name="particles"
+          min="20000"
+          max="100000"
+          step="1000"
+          value="45000"
+          aria-label="Partikelanzahl"
+        />
+        <div class="range-ticks">
+          <span>20k</span>
+          <span>60k</span>
+          <span>100k</span>
+        </div>
+      </div>
+
+      <!-- 2. Slider: Armanzahl -->
+      <div class="control-row">
+        <div class="control-label-line">
+          <label for="slider-arms">Armanzahl</label>
+          <output id="val-arms" for="slider-arms" class="control-value">4 Arme</output>
+        </div>
+        <input
+          type="range"
+          id="slider-arms"
+          name="arms"
+          min="2"
+          max="8"
+          step="1"
+          value="4"
+          aria-label="Armanzahl"
+        />
+        <div class="range-ticks">
+          <span>2</span>
+          <span>4</span>
+          <span>6</span>
+          <span>8</span>
+        </div>
+      </div>
+
+      <!-- 3. Slider: Drehgeschwindigkeit -->
+      <div class="control-row">
+        <div class="control-label-line">
+          <label for="slider-speed">Drehgeschwindigkeit</label>
+          <output id="val-speed" for="slider-speed" class="control-value">1.00×</output>
+        </div>
+        <input
+          type="range"
+          id="slider-speed"
+          name="speed"
+          min="0.1"
+          max="3.0"
+          step="0.05"
+          value="1.0"
+          aria-label="Drehgeschwindigkeit"
+        />
+        <div class="range-ticks">
+          <span>0.1×</span>
+          <span>1.0×</span>
+          <span>2.0×</span>
+          <span>3.0×</span>
+        </div>
+      </div>
+
+      <!-- 4. Slider: Farbschema -->
+      <div class="control-row">
+        <div class="control-label-line">
+          <label for="slider-color">Farbschema</label>
+          <output id="val-color" for="slider-color" class="control-value">1 · Argon Prime</output>
+        </div>
+        <input
+          type="range"
+          id="slider-color"
+          name="colorScheme"
+          min="1"
+          max="5"
+          step="1"
+          value="1"
+          aria-label="Farbschema"
+        />
+        <div id="palette-preview" class="palette-preview" aria-hidden="true">
+          <span class="swatch" id="swatch-core"></span>
+          <span class="swatch" id="swatch-inner"></span>
+          <span class="swatch" id="swatch-outer"></span>
+          <span class="swatch" id="swatch-dust"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Schnell-Aktionen: Von vorne starten & Menü ausblenden -->
+    <div class="panel-actions">
+      <button type="button" id="btn-reset" class="action-btn" title="Animation & Galaxie von vorne starten (Taste 0)">
+        <span>↺ Neu starten</span>
+        <kbd>0</kbd>
+      </button>
+      <button type="button" id="btn-toggle-ui" class="action-btn action-btn-secondary" title="Menü ausblenden (Taste H oder M)">
+        <span>Menü weg</span>
+        <kbd>H</kbd>
+      </button>
+    </div>
+
+    <!-- Interaktions-Kurzbefehle -->
+    <div class="shortcuts-box" aria-label="Tastatur- und Maussteuerung">
+      <div class="shortcut-item">
+        <kbd>Maus-Drag</kbd>
+        <span>3D-Kamera drehen</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>Mausrad</kbd>
+        <span>Rein- / Rauszoomen</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>Space</kbd>
+        <span>Pause / Weiter</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>Taste R</kbd>
+        <span>Zufällige Galaxie</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>Taste 0</kbd>
+        <span>Von vorne starten</span>
+      </div>
+      <div class="shortcut-item">
+        <kbd>Taste H / M</kbd>
+        <span>Menü aus-/einblenden</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- FPS- und Telemetrie-HUD unten links -->
+  <footer id="hud-panel" class="hud-panel" aria-label="Performance- und Kamera-Telemetrie">
+    <div class="hud-fps-block">
+      <div class="fps-indicator">
+        <span id="fps-dot" class="fps-dot fps-good"></span>
+        <span id="fps-value" class="fps-number">60</span>
+        <span class="fps-unit">FPS</span>
+      </div>
+      <div class="fps-submetrics">
+        <span id="frame-time">16.6 ms</span>
+        <span class="meta-sep">•</span>
+        <span id="gpu-calls">WebGL Additive</span>
+      </div>
+    </div>
+
+    <div class="hud-divider"></div>
+
+    <div class="hud-telemetry">
+      <div class="telemetry-item">
+        <span class="telemetry-label">STATUS</span>
+        <span id="hud-status" class="telemetry-val status-active-text">AKTIV</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">PARTIKEL</span>
+        <span id="hud-particles" class="telemetry-val">45.000</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">ORBIT (AZ / EL)</span>
+        <span id="hud-orbit" class="telemetry-val">28° / 34°</span>
+      </div>
+      <div class="telemetry-item">
+        <span class="telemetry-label">ZOOM</span>
+        <span id="hud-zoom" class="telemetry-val">1.00×</span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="./main.js"></script>
+</body>
+</html>
